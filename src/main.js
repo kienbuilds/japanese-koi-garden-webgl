@@ -79,9 +79,8 @@ window.__koi = { stats, config, renderer, scene, pipeline, veg, koi };
 
 const timer = new THREE.Timer();
 let time = 0;
-renderer.setAnimationLoop(() => {
-  timer.update();
-  const dt = Math.min(timer.getDelta(), 0.1);
+/** Advance the simulation by dt and render one frame (also used by the video capture mode). */
+function step(dt) {
   time += dt;
   shared.uTime.value = time;
   shared.uWind.value = config.wind.strength;
@@ -91,6 +90,15 @@ renderer.setAnimationLoop(() => {
   leaves.update(dt);
   if (controls) controls.update();
   pipeline.render(time, dt);
+}
+
+if (new URLSearchParams(location.search).has('capture')) {
+  // deterministic frame-by-frame rendering driven by scripts/record.mjs
+  import('./capture.js').then((m) => m.setupCapture({ renderer, camera, koi, lighting, step }));
+} else renderer.setAnimationLoop(() => {
+  timer.update();
+  const dt = Math.min(timer.getDelta(), 0.1);
+  step(dt);
   frames++; acc += dt;
   if (acc >= 0.5) {
     fps = frames / acc; frames = 0; acc = 0;

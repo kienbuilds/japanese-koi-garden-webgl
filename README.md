@@ -18,6 +18,23 @@ npm run dev        # mở http://localhost:5173
 
 FPS đo trên Intel Iris Xe (GPU tích hợp), cửa sổ 1600×900: **low ≈ 80**, **medium ≈ 48**, **high ≈ 24**. Máy có card rời tầm trung sẽ chạy medium/high nhanh hơn nhiều.
 
+## Quay video giới thiệu
+
+`src/capture.js` + `scripts/record.mjs` render một đoạn phim 52 giây (1920×1080, 60 fps) theo từng khung hình cố định, nên video luôn mượt kể cả trên máy yếu:
+
+- 0–23 s: cận cảnh mặt nước → lá đung đưa → bám theo một con koi ngoi lên làm gợn nước
+- 23–26 s: camera lùi về góc cố định
+- 26–46 s: đổi "sắc thái" (trưa nắng, hoàng hôn, âm u, chạng vạng, phim cổ, rực rỡ) mỗi 3 giây, đúng tiếng snare to nhất của mỗi ô nhịp nhạc
+- 46–52 s: tiêu đề, tối dần
+
+```bash
+npm run dev                          # để dev server chạy
+node scripts/record.mjs --preview 10 # xem nhanh: 1 ảnh/giây vào video/preview/
+node scripts/record.mjs              # bản đầy đủ → video/koi-garden.mp4 (ffmpeg-static)
+```
+
+Mốc cắt (`CUTS` trong `src/capture.js`) được đo theo bài nhạc đã dùng, tăng lên 80 BPM; đổi nhạc thì cần đo lại. File nhạc không nằm trong repo.
+
 ## Cấu trúc
 
 | Thư mục | Nội dung |
