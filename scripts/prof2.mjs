@@ -1,0 +1,21 @@
+import { chromium } from 'playwright';
+const url = process.argv[2] || 'http://localhost:5173/';
+const b = await chromium.launch({ channel: 'chrome', args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--disable-gpu-vsync', '--disable-frame-rate-limit'] });
+const p = await b.newPage({ viewport: { width: 1600, height: 900 } });
+await p.goto(url);
+await p.waitForFunction(() => window.__koiReady === true, null, { timeout: 180000 });
+await p.waitForTimeout(2000);
+console.log(await p.evaluate(() => { const out = []; window.__koi.scene.traverse(o => { if (o.isInstancedMesh) out.push(`${o.name || o.material.type}:${o.count}`); else if (o.isMesh) out.push(`mesh:${o.geometry.index ? o.geometry.index.count/3 : o.geometry.attributes.position.count/3}`); }); return out.join(' '); }));
+const run = async (label, fn) => {
+  await p.evaluate(fn);
+  await p.evaluate(() => { window.__koi.pipeline.profile = true; window.__koi.pipeline.profAcc = null; });
+  await p.waitForTimeout(3000);
+  const acc = await p.evaluate(() => window.__koi.pipeline.profAcc);
+  const n = acc.n;
+  console.log(label.padEnd(22), 'refl', (acc.reflection / n).toFixed(1), 'main', (acc['main+shadow'] / n).toFixed(1), 'fps', (await p.evaluate(() => window.__koi.stats.fps)).toFixed(1));
+};
+await run('baseline', () => {});
+await run('veg hidden', () => { window.__koi.veg.group.visible = false; });
+await run('veg + terrain hidden', () => { window.__koi.scene.children.forEach(c => { if (c.type === 'Group' && c.children.length === 2 && c.children[0].geometry.index) c.visible = false; }); });
+await run('everything hidden', () => { window.__koi.scene.children.forEach(c => c.visible = false); });
+await b.close();
